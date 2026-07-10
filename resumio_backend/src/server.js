@@ -46,7 +46,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/data-entry-operator", dataEntryOperatorRoutes);
 
 // Serve static assets from frontend build folder
-const frontendDistPath = path.join(__dirname, "..", "..", "resumio_frontend", "dist");
+const frontendDistPath = path.join(__dirname, "..", "public");
 app.use(express.static(frontendDistPath));
 
 // Fallback all non-API and non-upload routes to frontend index.html
