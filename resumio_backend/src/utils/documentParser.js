@@ -198,10 +198,51 @@ function parseCandidateData(text) {
 
   candidate.skills = [...new Set([...extractedSkills, ...keywordSkills])].slice(0, 15);
 
-  // Extract location (look for "Location:", "Based in:", etc.)
-  const locationMatch = text.match(/(?:location|based|city)[:\-]{0,2}\s*([^\.`,\n]+)/i);
-  if (locationMatch) {
-    candidate.currentLocation = locationMatch[1].trim().substring(0, 100);
+  // Extract location (improved)
+  // 1. Look for explicit keywords: Location:, Address:, Based in:
+  const explicitLocationMatch = text.match(/(?:location|address|based\s*in|city|residence)[\s:\-]+([A-Za-z0-9\s,\.]+?)(?:[\n\|•]|$)/i);
+  
+  if (explicitLocationMatch && explicitLocationMatch[1].trim().length > 2) {
+    candidate.currentLocation = explicitLocationMatch[1].trim().replace(/,$/, '').substring(0, 100);
+  } else {
+    // 2. Search the top 20 lines for address patterns
+    for (let i = 0; i < Math.min(rawLines.length, 20); i++) {
+      let line = rawLines[i];
+      
+      // Split line by common separators used in resume headers (e.g., | or •)
+      const segments = line.split(/\||•|·/).map(s => s.trim());
+      
+      for (const segment of segments) {
+        // Skip empty segments or segments with emails/URLs or obvious non-location words
+        if (segment.length < 3 || segment.length > 80 || segment.includes("@") || segment.includes("http") || segment.match(/github|linkedin/i) || segment.match(/\d{10}/)) continue;
+        
+        // Match full street addresses: "123 Main St, City, ST 12345"
+        const fullAddressRegex = /(?:\d+\s+[a-zA-Z0-9\s,\.]+?(?:street|st|avenue|ave|road|rd|boulevard|blvd|lane|ln|drive|dr|court|ct|plaza|square|sq|highway|hwy).*)/i;
+        const fullAddressMatch = segment.match(fullAddressRegex);
+        
+        if (fullAddressMatch) {
+          candidate.currentLocation = fullAddressMatch[0].trim().substring(0, 100);
+          break;
+        }
+        
+        // Match US City, State Zip: "New York, NY 10001" or "San Francisco, CA"
+        const cityStateZipRegex = /([A-Za-z\s]+?),\s*([A-Z]{2})(?:\s+\d{5}(?:-\d{4})?)?(\s|$)/;
+        const cityStateMatch = segment.match(cityStateZipRegex);
+        if (cityStateMatch && !segment.toLowerCase().includes("university") && !segment.toLowerCase().includes("college")) {
+          candidate.currentLocation = cityStateMatch[0].trim().substring(0, 100);
+          break;
+        }
+        
+        // Match Global City, Region: "London, UK", "Pune, Maharashtra", "Sydney, Australia"
+        const cityCountryRegex = /^([A-Za-z\s]+),\s*([A-Za-z\s]+)$/;
+        const ccMatch = segment.match(cityCountryRegex);
+        if (ccMatch && !segment.toLowerCase().includes("skill") && !segment.toLowerCase().includes("and") && !segment.toLowerCase().includes("or")) {
+          candidate.currentLocation = segment.trim().substring(0, 100);
+          break;
+        }
+      }
+      if (candidate.currentLocation) break;
+    }
   }
 
   // Extract current company (look for "Currently at:", "Company:", etc.)

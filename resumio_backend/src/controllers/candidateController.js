@@ -49,6 +49,9 @@ async function createCandidate(req, res) {
     return res.status(201).json(candidate);
   } catch (error) {
     console.error("CREATE CANDIDATE ERROR:", error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: "A candidate with this email or phone already exists." });
+    }
     return res
       .status(400)
       .json({ message: "Candidate create failed", error: error.message });

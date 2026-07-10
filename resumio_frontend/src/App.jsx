@@ -2056,6 +2056,7 @@ export default function App() {
                     type="email"
                     value={candidateForm.email}
                     onChange={(e) => setCandidateForm({ ...candidateForm, email: e.target.value })}
+                    required
                   />
                 </label>
                 <label className="form-field">
@@ -2063,6 +2064,7 @@ export default function App() {
                   <input
                     value={candidateForm.phone}
                     onChange={(e) => setCandidateForm({ ...candidateForm, phone: e.target.value })}
+                    required
                   />
                 </label>
                 <label className="form-field">
