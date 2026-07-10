@@ -66,6 +66,10 @@ async function createCandidateFromParsed(req, res) {
       payload.status = "Applied";
     }
 
+    if (!payload.roleApplied || payload.roleApplied.trim() === "") {
+      payload.roleApplied = "Not Specified";
+    }
+
     if (req.user && req.user.role && req.user.role.toUpperCase() === "DATA_ENTRY_OPERATOR") {
       payload.createdByOperator = true;
       payload.sentToManager = false;
