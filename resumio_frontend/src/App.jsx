@@ -369,7 +369,7 @@ export default function App() {
   // Debounced live search: refetch from the backend as the user types.
   const didMountRef = useRef(false);
   useEffect(() => {
-    if (!token || (role !== "admin" && role !== "manager")) return;
+    if (!token || (role !== "admin" && role !== "manager" && role !== "data_entry_operator")) return;
     if (!didMountRef.current) {
       didMountRef.current = true;
       return; // Skip the initial render; data is loaded by the token effect.

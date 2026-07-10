@@ -77,6 +77,12 @@ async function createCandidateFromParsed(req, res) {
       candidate,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "Candidate creation failed",
+        error: "A candidate with this email or phone already exists."
+      });
+    }
     return res.status(400).json({
       message: "Candidate creation failed",
       error: error.message,
