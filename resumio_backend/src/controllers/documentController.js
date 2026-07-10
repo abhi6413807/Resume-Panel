@@ -75,9 +75,28 @@ async function createCandidateFromParsed(req, res) {
       payload.sentToManager = false;
     }
 
-    const candidate = await Candidate.create(payload);
-    return res.status(201).json({
-      message: "Candidate created from document",
+    let existingCandidate = null;
+    if (payload.email) {
+      existingCandidate = await Candidate.findOne({ email: payload.email.toLowerCase().trim() });
+    }
+    if (!existingCandidate && payload.phone) {
+      existingCandidate = await Candidate.findOne({ phone: payload.phone.trim() });
+    }
+
+    let candidate;
+    if (existingCandidate) {
+      // Update existing candidate
+      candidate = await Candidate.findByIdAndUpdate(existingCandidate._id, payload, {
+        new: true,
+        runValidators: true,
+      });
+    } else {
+      // Create new candidate
+      candidate = await Candidate.create(payload);
+    }
+
+    return res.status(existingCandidate ? 200 : 201).json({
+      message: existingCandidate ? "Candidate updated from document" : "Candidate created from document",
       candidate,
     });
   } catch (error) {
@@ -88,7 +107,7 @@ async function createCandidateFromParsed(req, res) {
       });
     }
     return res.status(400).json({
-      message: "Candidate creation failed",
+      message: "Candidate creation/update failed",
       error: error.message,
     });
   }
