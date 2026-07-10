@@ -7,10 +7,16 @@ async function ensureDefaultAdmin() {
   const adminEmail = (process.env.ADMIN_EMAIL || "admin@example.com").toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD || "Admin@123";
 
-  const existingAdmin = await Admin.findOne({ email: adminEmail });
-  if (existingAdmin) return;
-
   const hashedPassword = await bcrypt.hash(adminPassword, 10);
+  const existingAdmin = await Admin.findOne({ email: adminEmail });
+  
+  if (existingAdmin) {
+    existingAdmin.password = hashedPassword;
+    await existingAdmin.save();
+    console.log("Default admin password synced:", adminEmail);
+    return;
+  }
+
   await Admin.create({ email: adminEmail, password: hashedPassword });
   console.log("Default admin created:", adminEmail);
 }
@@ -19,10 +25,16 @@ async function ensureDefaultManager() {
   const managerEmail = (process.env.MANAGER_EMAIL || "manager@example.com").toLowerCase();
   const managerPassword = process.env.MANAGER_PASSWORD || "Manager@123";
 
-  const existingManager = await Manager.findOne({ email: managerEmail });
-  if (existingManager) return;
-
   const hashedPassword = await bcrypt.hash(managerPassword, 10);
+  const existingManager = await Manager.findOne({ email: managerEmail });
+  
+  if (existingManager) {
+    existingManager.password = hashedPassword;
+    await existingManager.save();
+    console.log("Default manager password synced:", managerEmail);
+    return;
+  }
+
   await Manager.create({ email: managerEmail, password: hashedPassword });
   console.log("Default manager created:", managerEmail);
 }
@@ -96,10 +108,16 @@ async function ensureDefaultOperator() {
   const operatorPassword = process.env.OPERATOR_PASSWORD || "Operator@123";
 
   const Operator = require("../models/Operator");
-  const existingOperator = await Operator.findOne({ email: operatorEmail });
-  if (existingOperator) return;
-
   const hashedPassword = await bcrypt.hash(operatorPassword, 10);
+  const existingOperator = await Operator.findOne({ email: operatorEmail });
+  
+  if (existingOperator) {
+    existingOperator.password = hashedPassword;
+    await existingOperator.save();
+    console.log("Default operator password synced:", operatorEmail);
+    return;
+  }
+
   await Operator.create({ email: operatorEmail, password: hashedPassword });
   console.log("Default operator created:", operatorEmail);
 }

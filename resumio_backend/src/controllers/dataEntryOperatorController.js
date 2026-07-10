@@ -196,6 +196,12 @@ async function uploadResumeOperator(req, res) {
       // Merge unique skills
       candidate.skills = [...new Set([...candidate.skills, ...parsed.skills])];
     }
+    if (parsed.education && parsed.education.length > 0 && (!candidate.education || candidate.education.length === 0)) {
+      candidate.education = parsed.education;
+    }
+    if (parsed.experience && parsed.experience.length > 0 && (!candidate.experience || candidate.experience.length === 0)) {
+      candidate.experience = parsed.experience;
+    }
 
     await candidate.save();
 

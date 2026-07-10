@@ -287,6 +287,103 @@ function parseCandidateData(text) {
     candidate.roleApplied = roleMatch[0].trim();
   }
 
+  // Extract Experience and Education Arrays
+  const experienceArray = [];
+  let inExperienceSection = false;
+  let currentExperience = null;
+  
+  const educationArray = [];
+  let inEducationSection = false;
+  let currentEducation = null;
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const line = rawLines[i].trim();
+    if (!line) continue;
+    const lowerLine = line.toLowerCase();
+    
+    // Check section headers
+    if (/^(experience|work experience|professional experience|employment history)$/.test(lowerLine) || (lowerLine.includes("experience") && line.length < 30)) {
+      inExperienceSection = true;
+      inEducationSection = false;
+      if (currentExperience) experienceArray.push(currentExperience);
+      currentExperience = null;
+      continue;
+    }
+    if (/^(education|academic background|academics)$/.test(lowerLine) || (lowerLine.includes("education") && line.length < 30)) {
+      inEducationSection = true;
+      inExperienceSection = false;
+      if (currentEducation) educationArray.push(currentEducation);
+      currentEducation = null;
+      continue;
+    }
+    if (/^(skills|projects|certifications|summary|languages|objective)$/.test(lowerLine) || ((lowerLine.includes("skills") || lowerLine.includes("projects")) && line.length < 30)) {
+      inExperienceSection = false;
+      inEducationSection = false;
+      continue;
+    }
+
+    // Process Experience
+    if (inExperienceSection) {
+      const dateRangeMatch = line.match(/((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}|\d{4})\s*(?:-|to|–)\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}|\d{4}|Present|Current)/i);
+      
+      if (dateRangeMatch) {
+        if (currentExperience) {
+          experienceArray.push(currentExperience);
+        }
+        currentExperience = { company: "", role: "", from: dateRangeMatch[1], to: dateRangeMatch[2], description: "" };
+        
+        // Try to guess company and role from previous lines or current line
+        const previousLine = i > 0 ? rawLines[i-1].trim() : "";
+        if (previousLine && previousLine.length < 100 && !previousLine.toLowerCase().includes("experience")) {
+          if (previousLine.includes(" at ") || previousLine.includes(" | ") || previousLine.includes(" - ")) {
+             const parts = previousLine.split(/\s+at\s+|\||-/i);
+             currentExperience.role = parts[0].trim().substring(0, 100);
+             currentExperience.company = (parts[1] || "").trim().substring(0, 100);
+          } else {
+             currentExperience.company = previousLine.substring(0, 100);
+          }
+        }
+      } else if (currentExperience) {
+        if (currentExperience.description.length < 1000) {
+          currentExperience.description += (currentExperience.description ? " " : "") + line;
+        }
+      }
+    }
+    
+    // Process Education
+    if (inEducationSection) {
+      const yearMatch = line.match(/\b(19|20)\d{2}\b/);
+      const isDegree = /(bachelor|master|b\.tech|m\.tech|b\.sc|m\.sc|b\.a|m\.a|phd|diploma|degree)/i.test(lowerLine);
+      const isInstitute = /(university|college|institute|school|academy)/i.test(lowerLine);
+      
+      if (isDegree || isInstitute) {
+        if (currentEducation && (currentEducation.degree && currentEducation.institute)) {
+           educationArray.push(currentEducation);
+           currentEducation = null;
+        }
+        if (!currentEducation) {
+           currentEducation = { degree: "", institute: "", year: "", grade: "" };
+        }
+        
+        if (isDegree && !currentEducation.degree) {
+           currentEducation.degree = line.substring(0, 100);
+        } else if (isInstitute && !currentEducation.institute) {
+           currentEducation.institute = line.substring(0, 100);
+        }
+      }
+      
+      if (yearMatch && currentEducation && !currentEducation.year) {
+         currentEducation.year = yearMatch[0];
+      }
+    }
+  }
+  
+  if (currentExperience) experienceArray.push(currentExperience);
+  if (currentEducation) educationArray.push(currentEducation);
+  
+  candidate.experience = experienceArray.slice(0, 5); // Limit to 5
+  candidate.education = educationArray.slice(0, 3); // Limit to 3
+
   const fieldConfidence = {
     fullName: candidate.fullName ? 0.65 : 0,
     email: candidate.email ? 0.95 : 0,
