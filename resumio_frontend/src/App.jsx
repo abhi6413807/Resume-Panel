@@ -25,6 +25,8 @@ const initialForm = {
   skills: "",
   resumeUrl: "",
   status: "Applied",
+  education: [],
+  experience: [],
 };
 
 function downloadBlob(fileName, blob) {
@@ -1249,6 +1251,8 @@ export default function App() {
       skills: (candidate.skills || []).join(", "),
       resumeUrl: candidate.resumeUrl || "",
       status: candidate.status || "Applied",
+      education: candidate.education || [],
+      experience: candidate.experience || [],
     });
     setResumeFile(null);
     setIsCreateModalOpen(true);
@@ -2132,6 +2136,33 @@ export default function App() {
                     rows={4}
                   />
                 </label>
+                {candidateForm.education && candidateForm.education.length > 0 && (
+                  <div className="form-field form-field-full" style={{ marginTop: "12px" }}>
+                    <span style={{ fontWeight: "600", fontSize: "14px", display: "block", marginBottom: "6px" }}>Education History</span>
+                    <ul style={{ paddingLeft: "18px", margin: 0, fontSize: "14px", color: "var(--text-soft)" }}>
+                      {candidateForm.education.map((edu, idx) => (
+                        <li key={idx} style={{ marginBottom: "4px" }}>
+                          <strong>{edu.degree}</strong> at {edu.institute} {edu.year ? `(${edu.year})` : ""}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {candidateForm.experience && candidateForm.experience.length > 0 && (
+                  <div className="form-field form-field-full" style={{ marginTop: "12px" }}>
+                    <span style={{ fontWeight: "600", fontSize: "14px", display: "block", marginBottom: "6px" }}>Work Experience</span>
+                    <ul style={{ paddingLeft: "18px", margin: 0, fontSize: "14px", color: "var(--text-soft)" }}>
+                      {candidateForm.experience.map((exp, idx) => (
+                        <li key={idx} style={{ marginBottom: "8px" }}>
+                          <strong>{exp.role}</strong> at {exp.company} {exp.from && exp.to ? `(${exp.from} - ${exp.to})` : ""}
+                          {exp.description && (
+                            <p style={{ margin: "2px 0 0 0", fontSize: "13px", color: "var(--text-muted)" }}>{exp.description}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </fieldset>
               {role === "data_entry_operator" && (
                 <button type="submit">{editingCandidateId ? "Update Candidate" : "Save Candidate"}</button>
